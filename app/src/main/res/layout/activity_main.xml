@@ -68,4 +68,13 @@
         android:text="Load"
         android:textSize="18sp" />
 
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15sp"
+        android:gravity="center"
+        android:text="Nothing saved yet"
+        android:textSize="18sp" />
+
 </LinearLayout>

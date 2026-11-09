@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -47,6 +48,16 @@ public class MainActivity extends AppCompatActivity {
                     etAuthor.requestFocus();
                     return;
                 }
+
+                String pages = etPages.getText().toString();
+                if (pages.isEmpty()) {
+                    etPages.setError("number of pages required");
+                    etPages.requestFocus();
+                    return;
+                }
+
+                Toast.makeText(MainActivity.this, "הכל תקין! הנתונים נשמרו בהצלחה", Toast.LENGTH_SHORT).show();
+
 
 
 
