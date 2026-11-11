@@ -4,15 +4,28 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity {
+
+    FirebaseFirestore db;
+    EditText etBook, etAuthor, etPages;
+    TextView tvStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,9 +38,11 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        EditText etBook = findViewById(R.id.etBook);
-        EditText etAuthor = findViewById(R.id.etAuthor);
-        EditText etPages = findViewById(R.id.etPages);
+        db = FirebaseFirestore.getInstance();
+
+        etBook = findViewById(R.id.etBook);
+        etAuthor = findViewById(R.id.etAuthor);
+        etPages = findViewById(R.id.etPages);
         Button btnSave = findViewById(R.id.btnSave);
         Button btnLoad = findViewById(R.id.btnLoad);
 
@@ -35,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                String book = etBook.getText().toString();
-                if (book.isEmpty()) {
+                String name = etBook.getText().toString();
+                if (name.isEmpty()) {
                     etBook.setError("book name required");
                     etBook.requestFocus();
                     return;
@@ -56,7 +71,27 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                Toast.makeText(MainActivity.this, "הכל תקין! הנתונים נשמרו בהצלחה", Toast.LENGTH_SHORT).show();
+                Map<String, Object> book = new HashMap<>();
+                book.put("title", etBook.getText().toString());
+                book.put("author", etAuthor.getText().toString());
+                book.put("pages", pages);
+
+                tvStatus.setText("saving...");
+
+                db.collection("books").document("current").set(book)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                tvStatus.setText("saved on cloud");
+                                Toast.makeText(MainActivity.this, "book  saved", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                tvStatus.setText("save faliure: " + e.getMessage());
+                            }
+                        });
 
 
 
