@@ -16,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     FirebaseFirestore db;
     EditText etBook, etAuthor, etPages;
     TextView tvStatus;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +40,10 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+
+
+
+
         db = FirebaseFirestore.getInstance();
 
         etBook = findViewById(R.id.etBook);
@@ -45,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         etPages = findViewById(R.id.etPages);
         Button btnSave = findViewById(R.id.btnSave);
         Button btnLoad = findViewById(R.id.btnLoad);
+        tvStatus = findViewById(R.id.tvStatus);
 
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
                 Map<String, Object> book = new HashMap<>();
                 book.put("title", etBook.getText().toString());
                 book.put("author", etAuthor.getText().toString());
-                book.put("pages", pages);
+                int pagess = Integer.parseInt(etPages.getText().toString());
+                book.put("pages", pagess);
 
                 tvStatus.setText("saving...");
 
@@ -89,15 +97,46 @@ public class MainActivity extends AppCompatActivity {
                         .addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                tvStatus.setText("save faliure: " + e.getMessage());
+                                tvStatus.setText("saving failed: " + e.getMessage());
                             }
                         });
 
+            }
+        });
 
+        btnLoad.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                tvStatus.setText("Loading...");
 
+                db.collection("books").document("current").get()
+                        .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                            @Override
+                            public void onSuccess(DocumentSnapshot doc) {
 
+                                if (!doc.exists()) {
+                                    tvStatus.setText("No books saved yet");
+                                    return;
+                                }
 
+                                etBook.setText(doc.getString("title"));
+                                etAuthor.setText(doc.getString("author"));
+                                tvStatus.setText("Loaded from the cloud");
 
+                                Long pages = doc.getLong("pages");
+                                if (pages != null) {
+                                    etPages.setText(String.valueOf(pages));
+                                } else {
+                                    etPages.setText("");
+                                }
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                tvStatus.setText("Loading failed: " + e.getMessage());
+                            }
+                        });
             }
         });
 
