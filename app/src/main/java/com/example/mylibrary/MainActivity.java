@@ -25,7 +25,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     FirebaseFirestore db;
-    EditText etBook, etAuthor, etPages;
+    EditText etBook, etAuthor, etPages, etRead;
     TextView tvStatus;
 
 
@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         etBook = findViewById(R.id.etBook);
         etAuthor = findViewById(R.id.etAuthor);
         etPages = findViewById(R.id.etPages);
+        etRead = findViewById(R.id.etRead);
         Button btnSave = findViewById(R.id.btnSave);
         Button btnLoad = findViewById(R.id.btnLoad);
         tvStatus = findViewById(R.id.tvStatus);
@@ -78,11 +79,27 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
+                String readStr = etRead.getText().toString().trim();
+                if (readStr.isEmpty()) {
+                    etRead.setError("pages read required");
+                    etRead.requestFocus();
+                    return;
+                }
+
+                int pagess = Integer.parseInt(pages);
+                int pagesRead = Integer.parseInt(readStr);
+
+                if (pagesRead < 0 || pagesRead > pagess) {
+                    etRead.setError("must be between 0 and " + pagess);
+                    etRead.requestFocus();
+                    return;
+                }
+
                 Map<String, Object> book = new HashMap<>();
                 book.put("title", etBook.getText().toString());
                 book.put("author", etAuthor.getText().toString());
-                int pagess = Integer.parseInt(etPages.getText().toString());
                 book.put("pages", pagess);
+                book.put("pagesRead", pagesRead);
 
                 tvStatus.setText("saving...");
 
@@ -91,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess(Void unused) {
                                 tvStatus.setText("saved on cloud");
+                                updateProgressStatus(pagesRead, pagess);
                                 Toast.makeText(MainActivity.this, "book  saved", Toast.LENGTH_SHORT).show();
                             }
                         })
@@ -124,11 +142,24 @@ public class MainActivity extends AppCompatActivity {
                                 tvStatus.setText("Loaded from the cloud");
 
                                 Long pages = doc.getLong("pages");
+                                Long pagesRead = doc.getLong("pagesRead");
+
                                 if (pages != null) {
                                     etPages.setText(String.valueOf(pages));
                                 } else {
                                     etPages.setText("");
                                 }
+
+                                if (pagesRead != null) {
+                                    etRead.setText(String.valueOf(pagesRead));
+                                } else {
+                                    etRead.setText("0");
+                                }
+
+                                if (pages != null && pagesRead != null) {
+                                    updateProgressStatus(pagesRead.intValue(), pages.intValue());
+                                }
+
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {
@@ -143,5 +174,17 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+    }
+
+    private void updateProgressStatus(int pagesRead, int totalPages) {
+        if (totalPages <= 0) return;
+
+        int percent = (pagesRead * 100) / totalPages;
+
+        if (percent == 100) {
+            tvStatus.setText("סיימת את הספר!");
+        } else {
+            tvStatus.setText("קראת " + pagesRead + " מתוך " + totalPages + " עמודים (" + percent + "%)");
+        }
     }
 }
